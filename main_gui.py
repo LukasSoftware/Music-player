@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import wx
+import pygame
+
 
 
 class Frame(wx.Frame):
@@ -19,6 +21,7 @@ class Frame(wx.Frame):
 
         play = wx.Bitmap(name="play.png", type=wx.BITMAP_TYPE_ANY)
         self.playButton = wx.BitmapButton(panel1, bitmap=play, pos=(102, 50), size=(25, 25))
+        self.playButton.Bind(wx.EVT_BUTTON, self.play_audio)
 
         stop = wx.Bitmap(name="pause.png", type=wx.BITMAP_TYPE_ANY)
         self.stopButton = wx.BitmapButton(panel1, bitmap=stop, pos=(76, 50), size=(25, 25))
@@ -86,27 +89,28 @@ class Frame(wx.Frame):
             self.tracks.pop(delete_track)
 
     def clear_playlist(self, event):
-        if self.playList.GetSelection() != wx.NOT_FOUND:
-            track = self.playList.GetSelection()
-            track = self.playList.GetString(track)
-            path = self.tracks[track]
-            self.playList.Clear()
-            self.tracks.clear()
-            self.playList.Insert(track, pos=0)
-            self.tracks[track] = path
-        else:
-            self.playList.Clear()
-            self.tracks.clear()
+        self.playList.Clear()
+        self.tracks.clear()
+        self.title_label.SetLabel("Currently not playing any song")
 
     def change_title(self, event):
         if self.playList.GetSelection() != wx.NOT_FOUND:
             current_track = self.playList.GetSelection()
-            current_track= self.playList.GetString(current_track)
+            current_track = self.playList.GetString(current_track)
             self.title_label.SetLabel(current_track)
-            # self.play_audio()
+            self.play_audio(wx.EVT_LISTBOX_DCLICK)
 
-    # def play_audio(self):
+    def play_audio(self, event):
+        if self.playList.GetSelection() != wx.NOT_FOUND:
+            track_index = self.playList.GetSelection()
+            track = self.playList.GetString(track_index)
+        else:
+            return
 
+        path = self.tracks[track]
+        pygame.mixer.init(frequency=44100, size=16, channels=2, buffer=4096)
+        pygame.mixer.music.load(path)
+        pygame.mixer.music.play()
 
 
 app = wx.App()
