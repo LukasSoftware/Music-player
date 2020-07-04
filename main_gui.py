@@ -1,9 +1,7 @@
-#!/usrself=Nonepython3
 # -*- coding: utf-8 -*-
 
 import wx
 import pygame
-
 
 
 class Frame(wx.Frame):
@@ -13,6 +11,7 @@ class Frame(wx.Frame):
 
         self.tracks = {}
         self.volume = 100
+        self.paused = False
 
         self.show_gui()
 
@@ -25,12 +24,15 @@ class Frame(wx.Frame):
 
         stop = wx.Bitmap(name="pause.png", type=wx.BITMAP_TYPE_ANY)
         self.stopButton = wx.BitmapButton(panel1, bitmap=stop, pos=(76, 50), size=(25, 25))
+        self.stopButton.Bind(wx.EVT_BUTTON, self.pause)
 
         forward = wx.Bitmap(name="forward.png", type=wx.BITMAP_TYPE_ANY)
         self.forwardButton = wx.BitmapButton(panel1, bitmap=forward, pos=(127, 50), size=(25, 25))
+        self.forwardButton.Bind(wx.EVT_BUTTON, self.forward)
 
         rewind = wx.Bitmap(name="rewind.png", type=wx.BITMAP_TYPE_ANY)
         self.rewindButton = wx.BitmapButton(panel1, bitmap=rewind, pos=(50, 50), size=(25, 25))
+        self.rewindButton.Bind(wx.EVT_BUTTON, self.rewind)
 
         self.addButton = wx.Button(panel1, label="Add", pos=(470, 100), size=(50, 25))
         self.addButton.Bind(wx.EVT_BUTTON, self.add_to_playlist)
@@ -55,6 +57,9 @@ class Frame(wx.Frame):
 
         self.duration = wx.StaticText(panel1, label="00:00", pos=(360, 25))
 
+        pygame.init()
+        pygame.mixer.init(frequency=44100, size=16, channels=2, buffer=4096)
+
         self.Center()
         self.SetSize(600, 700)
         self.SetTitle("Player")
@@ -66,9 +71,8 @@ class Frame(wx.Frame):
         self.volume = value
 
     def add_to_playlist(self, event):
-        with wx.FileDialog(self, "Add file to playlist", wildcard="Music files (*.wav)|*.wav",
+        with wx.FileDialog(self, "Add file to playlist", wildcard="Music files (*.mp3)|*mp3",
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE) as file_dialog:
-
             if file_dialog.ShowModal() == wx.ID_CANCEL:
                 return
 
@@ -76,10 +80,9 @@ class Frame(wx.Frame):
             titles = file_dialog.GetFilenames()
 
             for i, e in zip(titles, path_name):
-                i = i.split(".")
                 position = self.playList.GetCount()
-                self.playList.Insert(i[0], pos=position)
-                self.tracks[i[0]] = e
+                self.playList.Insert(i, pos=position)
+                self.tracks[i] = e
 
     def delete_track(self, event):
         if self.playList.GetSelection() != wx.NOT_FOUND:
@@ -87,6 +90,8 @@ class Frame(wx.Frame):
             delete_track = self.playList.GetString(track)
             self.playList.Delete(track)
             self.tracks.pop(delete_track)
+            if self.playList.GetCount() == 0:
+                self.title_label.SetLabel("Currently not playing any song")
 
     def clear_playlist(self, event):
         self.playList.Clear()
@@ -104,13 +109,43 @@ class Frame(wx.Frame):
         if self.playList.GetSelection() != wx.NOT_FOUND:
             track_index = self.playList.GetSelection()
             track = self.playList.GetString(track_index)
+            path = self.tracks[track]
+            pygame.mixer.music.load(path)
+            pygame.mixer.music.play()
         else:
             return
 
-        path = self.tracks[track]
-        pygame.mixer.init(frequency=44100, size=16, channels=2, buffer=4096)
-        pygame.mixer.music.load(path)
-        pygame.mixer.music.play()
+    def forward(self, event):
+        if self.playList.GetSelection() != wx.NOT_FOUND:
+            track_index = self.playList.GetSelection()
+            self.playList.SetSelection(track_index + 1)
+            track = self.playList.GetSelection()
+            next_track = self.playList.GetString(track)
+            path = self.tracks[next_track]
+            pygame.mixer.music.load(path)
+            pygame.mixer.music.play()
+        else:
+            return
+
+    def rewind(self, event):
+        if self.playList.GetSelection() != wx.NOT_FOUND:
+            track_index = self.playList.GetSelection()
+            self.playList.SetSelection(track_index - 1)
+            track = self.playList.GetSelection()
+            next_track = self.playList.GetString(track)
+            path = self.tracks[next_track]
+            pygame.mixer.music.load(path)
+            pygame.mixer.music.play()
+        else:
+            return
+
+    def pause(self, event):
+        if self.paused:
+            pygame.mixer.music.unpause()
+            self.paused = False
+        else:
+            pygame.mixer.music.pause()
+            self.paused = True
 
 
 app = wx.App()
