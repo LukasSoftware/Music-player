@@ -2,6 +2,7 @@
 
 import wx
 import pygame
+# import time
 
 
 class Frame(wx.Frame):
@@ -68,10 +69,11 @@ class Frame(wx.Frame):
         handler = event.GetEventObject()
         value = handler.GetValue()
         self.volumeValue.SetLabel(str(value) + "%")
-        self.volume = value
+        value = value / 100
+        pygame.mixer.music.set_volume(value)
 
     def add_to_playlist(self, event):
-        with wx.FileDialog(self, "Add file to playlist", wildcard="Music files (*.mp3)|*mp3",
+        with wx.FileDialog(self, "Add file to playlist", wildcard="Music files (*.mp3)|*.mp3|Wave files (*.wav)|.wav",
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE) as file_dialog:
             if file_dialog.ShowModal() == wx.ID_CANCEL:
                 return
@@ -97,6 +99,7 @@ class Frame(wx.Frame):
         self.playList.Clear()
         self.tracks.clear()
         self.title_label.SetLabel("Currently not playing any song")
+        pygame.mixer.music.stop()
 
     def change_title(self, event):
         if self.playList.GetSelection() != wx.NOT_FOUND:
@@ -106,14 +109,20 @@ class Frame(wx.Frame):
             self.play_audio(wx.EVT_LISTBOX_DCLICK)
 
     def play_audio(self, event):
+
         if self.playList.GetSelection() != wx.NOT_FOUND:
             track_index = self.playList.GetSelection()
             track = self.playList.GetString(track_index)
             path = self.tracks[track]
             pygame.mixer.music.load(path)
             pygame.mixer.music.play()
-        else:
-            return
+
+        elif self.playList.GetSelection() == wx.NOT_FOUND:
+            track_index = 0
+            track = self.playList.GetString(track_index)
+            path = self.tracks[track]
+            pygame.mixer.music.load(path)
+            pygame.mixer.music.play()
 
     def forward(self, event):
         if self.playList.GetSelection() != wx.NOT_FOUND:
