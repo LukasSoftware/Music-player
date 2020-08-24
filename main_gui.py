@@ -2,7 +2,8 @@
 
 import wx
 import pygame
-# import time
+import time
+import threading
 
 
 class Frame(wx.Frame):
@@ -53,7 +54,7 @@ class Frame(wx.Frame):
         self.volumeValue = wx.StaticText(panel1, label="100%", pos=(260, 53))
 
         self.playList = wx.ListBox(panel1, pos=(10, 100), size=(460, 500))
-        self.playList.Bind(wx.EVT_LISTBOX_DCLICK, self.change_title)
+        self.playList.Bind(wx.EVT_LISTBOX_DCLICK, self.play_audio)
         self.title_label = wx.StaticText(panel1, label="Currently not playing any song", pos=(10, 10))
 
         self.duration = wx.StaticText(panel1, label="00:00", pos=(360, 25))
@@ -63,7 +64,7 @@ class Frame(wx.Frame):
 
         self.Center()
         self.SetSize(600, 700)
-        self.SetTitle("Player")
+        self.SetTitle("MP3 Player")
 
     def set_volume(self, event):
         handler = event.GetEventObject()
@@ -73,7 +74,7 @@ class Frame(wx.Frame):
         pygame.mixer.music.set_volume(value)
 
     def add_to_playlist(self, event):
-        with wx.FileDialog(self, "Add file to playlist", wildcard="Music files (*.mp3)|*.mp3|Wave files (*.wav)|.wav",
+        with wx.FileDialog(self, "Add file to playlist", wildcard="Music files (*.mp3)|*.mp3",
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE) as file_dialog:
             if file_dialog.ShowModal() == wx.ID_CANCEL:
                 return
@@ -101,28 +102,24 @@ class Frame(wx.Frame):
         self.title_label.SetLabel("Currently not playing any song")
         pygame.mixer.music.stop()
 
-    def change_title(self, event):
+    def change_title(self):
         if self.playList.GetSelection() != wx.NOT_FOUND:
             current_track = self.playList.GetSelection()
             current_track = self.playList.GetString(current_track)
             self.title_label.SetLabel(current_track)
-            self.play_audio(wx.EVT_LISTBOX_DCLICK)
 
     def play_audio(self, event):
-
         if self.playList.GetSelection() != wx.NOT_FOUND:
             track_index = self.playList.GetSelection()
             track = self.playList.GetString(track_index)
             path = self.tracks[track]
             pygame.mixer.music.load(path)
             pygame.mixer.music.play()
-
-        elif self.playList.GetSelection() == wx.NOT_FOUND:
-            track_index = 0
-            track = self.playList.GetString(track_index)
-            path = self.tracks[track]
-            pygame.mixer.music.load(path)
-            pygame.mixer.music.play()
+            self.change_title()
+            self.played = True
+            process = threading.Thread(target=self.song_time)
+            process.start()
+            process.join()
 
     def forward(self, event):
         if self.playList.GetSelection() != wx.NOT_FOUND:
@@ -133,7 +130,9 @@ class Frame(wx.Frame):
             path = self.tracks[next_track]
             pygame.mixer.music.load(path)
             pygame.mixer.music.play()
+            self.played = False
         else:
+            self.played = False
             return
 
     def rewind(self, event):
@@ -145,19 +144,45 @@ class Frame(wx.Frame):
             path = self.tracks[next_track]
             pygame.mixer.music.load(path)
             pygame.mixer.music.play()
+            self.played = False
         else:
+            self.played = False
             return
 
     def pause(self, event):
+
         if self.paused:
             pygame.mixer.music.unpause()
             self.paused = False
+            self.played = False
+
         else:
             pygame.mixer.music.pause()
             self.paused = True
+            self.played = False
+
+    def song_time(self):
+        minutes = 0
+        sec = 0
+        while self.played:
+            if sec == 60:
+                minutes += 1
+                sec = 0
+            if sec < 10:
+                print(f'{minutes}:0{sec}')
+            else:
+                print(f'{minutes}:{sec}')
+            time.sleep(1)
+            sec += 1
 
 
-app = wx.App()
-execute = Frame(None)
-execute.Show()
-app.MainLoop()
+def execute():
+    app = wx.App()
+    exe = Frame(None)
+    exe.Show()
+    app.MainLoop()
+
+
+t = threading.Thread(target=execute)
+t.start()
+t.join()
