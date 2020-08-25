@@ -4,6 +4,7 @@ import wx
 import pygame
 import time
 import threading
+from mutagen.mp3 import MP3
 
 
 class Frame(wx.Frame):
@@ -55,6 +56,7 @@ class Frame(wx.Frame):
 
         self.playList = wx.ListBox(panel1, pos=(10, 100), size=(460, 500))
         self.playList.Bind(wx.EVT_LISTBOX_DCLICK, self.play_audio)
+
         self.title_label = wx.StaticText(panel1, label="Currently not playing any song", pos=(10, 10))
 
         self.duration = wx.StaticText(panel1, label="00:00", pos=(360, 25))
@@ -115,11 +117,12 @@ class Frame(wx.Frame):
             path = self.tracks[track]
             pygame.mixer.music.load(path)
             pygame.mixer.music.play()
+            audio_time = MP3(path).info
+            audio_time = int(audio_time.length)
             self.change_title()
             self.played = True
-            process = threading.Thread(target=self.song_time)
-            process.start()
-            process.join()
+            self.process = threading.Thread(target=self.song_time, args=[audio_time])
+            self.process.start()
 
     def forward(self, event):
         if self.playList.GetSelection() != wx.NOT_FOUND:
@@ -154,24 +157,30 @@ class Frame(wx.Frame):
         if self.paused:
             pygame.mixer.music.unpause()
             self.paused = False
-            self.played = False
+            self.played = True
 
         else:
             pygame.mixer.music.pause()
             self.paused = True
             self.played = False
 
-    def song_time(self):
+    def song_time(self, dur):
         minutes = 0
         sec = 0
+        progress = dur / 100
+        progress = int(round(progress, 0))
+        secs = 0
         while self.played:
             if sec == 60:
                 minutes += 1
                 sec = 0
             if sec < 10:
-                print(f'{minutes}:0{sec}')
+                self.duration.SetLabel(f'{minutes}:0{sec}')
             else:
-                print(f'{minutes}:{sec}')
+                self.duration.SetLabel(f'{minutes}:{sec}')
+            if sec % progress == 0:
+                secs += 1
+                self.timer.SetValue(secs)
             time.sleep(1)
             sec += 1
 
@@ -185,4 +194,3 @@ def execute():
 
 t = threading.Thread(target=execute)
 t.start()
-t.join()
