@@ -15,51 +15,55 @@ class Frame(wx.Frame):
         self.tracks = {}
         self.volume = 100
         self.paused = False
-
-        self.show_gui()
-
-    def show_gui(self):
+        self.played = False
+        self.minutes = 0
+        self.sec = 0
         panel1 = wx.Panel(self)
 
         play = wx.Bitmap(name="play.png", type=wx.BITMAP_TYPE_ANY)
         self.playButton = wx.BitmapButton(panel1, bitmap=play, pos=(102, 50), size=(25, 25))
-        self.playButton.Bind(wx.EVT_BUTTON, self.play_audio)
 
         stop = wx.Bitmap(name="pause.png", type=wx.BITMAP_TYPE_ANY)
         self.stopButton = wx.BitmapButton(panel1, bitmap=stop, pos=(76, 50), size=(25, 25))
-        self.stopButton.Bind(wx.EVT_BUTTON, self.pause)
 
         forward = wx.Bitmap(name="forward.png", type=wx.BITMAP_TYPE_ANY)
         self.forwardButton = wx.BitmapButton(panel1, bitmap=forward, pos=(127, 50), size=(25, 25))
-        self.forwardButton.Bind(wx.EVT_BUTTON, self.forward)
 
         rewind = wx.Bitmap(name="rewind.png", type=wx.BITMAP_TYPE_ANY)
         self.rewindButton = wx.BitmapButton(panel1, bitmap=rewind, pos=(50, 50), size=(25, 25))
-        self.rewindButton.Bind(wx.EVT_BUTTON, self.rewind)
 
         self.addButton = wx.Button(panel1, label="Add", pos=(470, 100), size=(50, 25))
-        self.addButton.Bind(wx.EVT_BUTTON, self.add_to_playlist)
 
         self.deleteButton = wx.Button(panel1, label="Delete", pos=(470, 125), size=(50, 25))
-        self.deleteButton.Bind(wx.EVT_BUTTON, self.delete_track)
 
         self.clearButton = wx.Button(panel1, label="Clear", pos=(470, 150), size=(50, 25))
-        self.clearButton.Bind(wx.EVT_BUTTON, self.clear_playlist)
 
-        self.timer = wx.Gauge(panel1, range = 100, pos=(25, 30), size=(330, 5))
+        self.timer = wx.Gauge(panel1, range=100, pos=(25, 30), size=(330, 5))
 
         self.volume = wx.Slider(panel1, value=100, minValue=0, maxValue=100, style=wx.SL_HORIZONTAL,
                                 pos=(160, 50), size=(100, -1))
-        self.volume.Bind(wx.EVT_SCROLL, self.set_volume)
 
         self.volumeValue = wx.StaticText(panel1, label="100%", pos=(260, 53))
 
         self.playList = wx.ListBox(panel1, pos=(10, 100), size=(460, 500))
-        self.playList.Bind(wx.EVT_LISTBOX_DCLICK, self.play_audio)
 
         self.title_label = wx.StaticText(panel1, label="Currently not playing any song", pos=(10, 10))
 
-        self.duration = wx.StaticText(panel1, label="00:00", pos=(360, 25))
+        self.duration = wx.StaticText(panel1, label="0:00", pos=(360, 25))
+
+        self.show_gui()
+
+    def show_gui(self):
+
+        self.playButton.Bind(wx.EVT_BUTTON, self.play_audio)
+        self.stopButton.Bind(wx.EVT_BUTTON, self.pause)
+        self.forwardButton.Bind(wx.EVT_BUTTON, self.forward)
+        self.rewindButton.Bind(wx.EVT_BUTTON, self.rewind)
+        self.addButton.Bind(wx.EVT_BUTTON, self.add_to_playlist)
+        self.deleteButton.Bind(wx.EVT_BUTTON, self.delete_track)
+        self.clearButton.Bind(wx.EVT_BUTTON, self.clear_playlist)
+        self.volume.Bind(wx.EVT_SCROLL, self.set_volume)
+        self.playList.Bind(wx.EVT_LISTBOX_DCLICK, self.play_audio)
 
         pygame.init()
         pygame.mixer.init(frequency=44100, size=16, channels=2, buffer=4096)
@@ -119,13 +123,14 @@ class Frame(wx.Frame):
             pygame.mixer.music.play()
             audio_time = MP3(path).info
             audio_time = int(audio_time.length)
+            self.process = threading.Thread(target=self.song_time, args=[audio_time])
             self.change_title()
             self.played = True
-            self.process = threading.Thread(target=self.song_time, args=[audio_time])
             self.process.start()
 
     def forward(self, event):
         if self.playList.GetSelection() != wx.NOT_FOUND:
+            self.played = False
             track_index = self.playList.GetSelection()
             self.playList.SetSelection(track_index + 1)
             track = self.playList.GetSelection()
@@ -133,7 +138,6 @@ class Frame(wx.Frame):
             path = self.tracks[next_track]
             pygame.mixer.music.load(path)
             pygame.mixer.music.play()
-            self.played = False
         else:
             self.played = False
             return
@@ -164,25 +168,26 @@ class Frame(wx.Frame):
             self.paused = True
             self.played = False
 
-    def song_time(self, dur):
-        minutes = 0
-        sec = 0
+    def song_time(self):
+        while self.played:
+            if self.sec == 60:
+                self.minutes += 1
+                self.sec = 0
+            if self.sec < 10:
+                self.duration.SetLabel(f'{self.minutes}:0{self.sec}')
+            else:
+                self.duration.SetLabel(f'{self.minutes}:{self.sec}')
+
+    def progress_bar(self, dur):
+        secs = 0
         progress = dur / 100
         progress = int(round(progress, 0))
-        secs = 0
-        while self.played:
-            if sec == 60:
-                minutes += 1
-                sec = 0
-            if sec < 10:
-                self.duration.SetLabel(f'{minutes}:0{sec}')
-            else:
-                self.duration.SetLabel(f'{minutes}:{sec}')
-            if sec % progress == 0:
-                secs += 1
-                self.timer.SetValue(secs)
-            time.sleep(1)
-            sec += 1
+
+        if self.sec % progress == 0:
+            secs += 1
+            self.timer.SetValue(secs)
+        time.sleep(1)
+        self.sec += 1
 
 
 def execute():
