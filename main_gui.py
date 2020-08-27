@@ -17,7 +17,7 @@ class Frame(wx.Frame):
     def __init__(self, *args, **kw):
         super(Frame, self).__init__(*args, **kw)
 
-# Initialize all variables, layout and buttons
+# Initialize all variables, layout, widgets and buttons
 
         self.tracks = {}
         self.volume = 100
@@ -58,9 +58,13 @@ class Frame(wx.Frame):
 
         self.duration = wx.StaticText(panel1, label="0:00", pos=(360, 25))
 
+        # Function to show main window
+
         self.show_gui()
 
     def show_gui(self):
+
+        # Binding functions to buttons
 
         self.playButton.Bind(wx.EVT_BUTTON, self.play_audio)
         self.stopButton.Bind(wx.EVT_BUTTON, self.pause)
@@ -72,8 +76,12 @@ class Frame(wx.Frame):
         self.volume.Bind(wx.EVT_SCROLL, self.set_volume)
         self.playList.Bind(wx.EVT_LISTBOX_DCLICK, self.play_audio)
 
+        # Initialize PyGame to play music
+
         pygame.init()
         pygame.mixer.init(frequency=44100, size=16, channels=2, buffer=4096)
+
+        # Setting properties of window
 
         self.Center()
         self.SetSize(600, 700)
