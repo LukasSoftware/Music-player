@@ -201,6 +201,8 @@ class Frame(wx.Frame):
             self.paused = True
             self.played = False
 
+# Definition of function to show duration of playing song. Need to be fixed.
+
     def song_time(self):
         while self.played:
             if self.sec == 60:
@@ -210,6 +212,8 @@ class Frame(wx.Frame):
                 self.duration.SetLabel(f'{self.minutes}:0{self.sec}')
             else:
                 self.duration.SetLabel(f'{self.minutes}:{self.sec}')
+
+# Definition of function to show progress bar of playing song. Need to be fixed.
 
     def progress_bar(self, dur):
         secs = 0
@@ -223,12 +227,16 @@ class Frame(wx.Frame):
         self.sec += 1
 
 
+# Definition of main app function
+
 def execute():
     app = wx.App()
     exe = Frame(None)
     exe.Show()
     app.MainLoop()
 
+
+# Start app as thread
 
 t = threading.Thread(target=execute)
 t.start()
