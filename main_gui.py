@@ -87,12 +87,16 @@ class Frame(wx.Frame):
         self.SetSize(600, 700)
         self.SetTitle("MP3 Player")
 
+# Definition of function that can set volume of playing music
+
     def set_volume(self, event):
         handler = event.GetEventObject()
         value = handler.GetValue()
         self.volumeValue.SetLabel(str(value) + "%")
         value = value / 100
         pygame.mixer.music.set_volume(value)
+
+# Definition of function to add files to playlist
 
     def add_to_playlist(self, event):
         with wx.FileDialog(self, "Add file to playlist", wildcard="Music files (*.mp3)|*.mp3",
@@ -108,6 +112,8 @@ class Frame(wx.Frame):
                 self.playList.Insert(i, pos=position)
                 self.tracks[i] = e
 
+# Definition of function to delete track from playlist
+
     def delete_track(self, event):
         if self.playList.GetSelection() != wx.NOT_FOUND:
             track = self.playList.GetSelection()
@@ -117,17 +123,23 @@ class Frame(wx.Frame):
             if self.playList.GetCount() == 0:
                 self.title_label.SetLabel("Currently not playing any song")
 
+# Definition of function to clear playlist
+
     def clear_playlist(self, event):
         self.playList.Clear()
         self.tracks.clear()
         self.title_label.SetLabel("Currently not playing any song")
         pygame.mixer.music.stop()
 
+# Definition of function that can change title of playing track when new is starting to play
+
     def change_title(self):
         if self.playList.GetSelection() != wx.NOT_FOUND:
             current_track = self.playList.GetSelection()
             current_track = self.playList.GetString(current_track)
             self.title_label.SetLabel(current_track)
+
+# Definition of main function that playing music
 
     def play_audio(self, event):
         if self.playList.GetSelection() != wx.NOT_FOUND:
@@ -143,6 +155,8 @@ class Frame(wx.Frame):
             self.played = True
             self.process.start()
 
+# Definition of function to change track to next on playlist
+
     def forward(self, event):
         if self.playList.GetSelection() != wx.NOT_FOUND:
             self.played = False
@@ -157,6 +171,8 @@ class Frame(wx.Frame):
             self.played = False
             return
 
+# Definition of function to change track to previous
+
     def rewind(self, event):
         if self.playList.GetSelection() != wx.NOT_FOUND:
             track_index = self.playList.GetSelection()
@@ -170,6 +186,8 @@ class Frame(wx.Frame):
         else:
             self.played = False
             return
+
+# Definition of function to pause music stream
 
     def pause(self, event):
 
