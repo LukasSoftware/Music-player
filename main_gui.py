@@ -1,3 +1,8 @@
+""" Program is music player that can play only mp3 files right now,
+    future plans are to play more kinds of music files,
+    definitive version will be with options to equalize
+    music stream but it is far future """
+
 # -*- coding: utf-8 -*-
 
 import wx
@@ -11,6 +16,8 @@ class Frame(wx.Frame):
 
     def __init__(self, *args, **kw):
         super(Frame, self).__init__(*args, **kw)
+
+# Initialize all variables, layout and buttons
 
         self.tracks = {}
         self.volume = 100
@@ -123,7 +130,7 @@ class Frame(wx.Frame):
             pygame.mixer.music.play()
             audio_time = MP3(path).info
             audio_time = int(audio_time.length)
-            self.process = threading.Thread(target=self.song_time, args=[audio_time])
+            self.process = threading.Thread(target=self.song_time)
             self.change_title()
             self.played = True
             self.process.start()
