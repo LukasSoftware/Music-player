@@ -146,12 +146,12 @@ class Frame(wx.Frame):
             path = self.tracks[track]
             audio_time = MP3(path).info
             audio_time = int(audio_time.length)
-            return track, path, audio_time
+            return track_index, path, audio_time
 
 # Definition of main function that playing music
 
     def play_audio(self, event):
-        a, path, b = self.prepare_track()
+        index, path, time = self.prepare_track()
         pygame.mixer.music.load(path)
         pygame.mixer.music.play()
         self.process = threading.Thread(target=self.song_time)
@@ -162,21 +162,25 @@ class Frame(wx.Frame):
 # Definition of function to change track to next on playlist
 
     def forward(self, event):
-            self.playList.SetSelection(track_index + 1)
-            next_track = self.playList.GetString(track)
-            path = self.tracks[next_track]
-            pygame.mixer.music.load(path)
-            pygame.mixer.music.play()
+        index, path, time = self.prepare_track()
+        self.playList.SetSelection(index + 1)
+        track = self.playList.GetSelection()
+        next_track = self.playList.GetString(track)
+        path = self.tracks[next_track]
+        pygame.mixer.music.load(path)
+        pygame.mixer.music.play()
 
 # Definition of function to change track to previous
 
     def rewind(self, event):
-            self.playList.SetSelection(track_index - 1)
-            next_track = self.playList.GetString(track)
-            path = self.tracks[next_track]
-            pygame.mixer.music.load(path)
-            pygame.mixer.music.play()
-            self.played = False
+        index, path, time = self.prepare_track()
+        self.playList.SetSelection(index - 1)
+        track = self.playList.GetSelection()
+        next_track = self.playList.GetString(track)
+        path = self.tracks[next_track]
+        pygame.mixer.music.load(path)
+        pygame.mixer.music.play()
+        self.played = False
 
 # Definition of function to pause music stream
 
