@@ -154,12 +154,10 @@ class Frame(wx.Frame):
         index, path, time = self.prepare_track()
         pygame.mixer.music.load(path)
         pygame.mixer.music.play()
-        p1 = threading.Thread(target=self.song_time)
-        p2 = threading.Thread(target=self.progress_bar, args=[time])
+        p1 = threading.Thread(target=self.song_time, args=[time])
         self.change_title()
         self.played = True
         p1.start()
-        p2.start()
 
 # Definition of function to change track to next on playlist
 
@@ -202,30 +200,22 @@ class Frame(wx.Frame):
 
 # Definition of function to show duration of playing song. Need to be fixed.
 
-    def song_time(self):
+    def song_time(self, dur):
+        self.timer.SetRange(dur)
+        progress_value = 0
         while True:
             if self.sec == 60:
                 self.minutes += 1
                 self.sec = 0
             if self.sec < 10:
                 self.duration.SetLabel(f'{self.minutes}:0{self.sec}')
+                self.timer.SetValue(progress_value)
             else:
                 self.duration.SetLabel(f'{self.minutes}:{self.sec}')
+                self.timer.SetValue(progress_value)
             self.sec += 1
+            progress_value += 1
             time.sleep(1)
-
-# Definition of function to show progress bar of playing song. Need to be fixed.
-
-    def progress_bar(self, dur):
-        secs = 0
-        progress = dur / 100
-        progress = int(round(progress, 0))
-
-        while True:
-            if self.sec % progress == 0:
-                secs += 0.1
-                self.timer.SetValue(secs)
-            time.sleep(0.1)
 
 
 # Definition of main app function
