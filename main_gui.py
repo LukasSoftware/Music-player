@@ -10,6 +10,7 @@ import pygame
 import time
 import threading
 from mutagen.mp3 import MP3
+# import func
 
 
 class Frame(wx.Frame):
@@ -21,6 +22,7 @@ class Frame(wx.Frame):
 
         self.tracks = {}
         self.volume = 100
+        self.cls = False
         self.paused = False
         self.played = False
         self.minutes = 0
@@ -75,6 +77,7 @@ class Frame(wx.Frame):
         self.clearButton.Bind(wx.EVT_BUTTON, self.clear_playlist)
         self.volume.Bind(wx.EVT_SCROLL, self.set_volume)
         self.playList.Bind(wx.EVT_LISTBOX_DCLICK, self.play_audio)
+        self.Bind(wx.EVT_CLOSE, self.close_window)
 
         # Initialize PyGame to play music
 
@@ -216,18 +219,17 @@ class Frame(wx.Frame):
             self.sec += 1
             progress_value += 1
             time.sleep(1)
+            if self.cls:
+                break
+
+    def close_window(self, event):
+        self.cls = True
+        self.Destroy()
 
 
-# Definition of main app function
+# Execute app
 
-def execute():
-    app = wx.App()
-    exe = Frame(None)
-    exe.Show()
-    app.MainLoop()
-
-
-# Start app as thread
-
-t = threading.Thread(target=execute)
-t.start()
+app = wx.App()
+exe = Frame(None)
+exe.Show()
+app.MainLoop()
