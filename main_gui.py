@@ -27,6 +27,7 @@ class Frame(wx.Frame):
         self.played = True
         self.minutes = 0
         self.sec = 0
+        self.progress_value = 0
         panel1 = wx.Panel(self)
 
         play = wx.Bitmap(name="play.png", type=wx.BITMAP_TYPE_ANY)
@@ -146,15 +147,16 @@ class Frame(wx.Frame):
     # Definition of main function that playing music
     def play_audio(self, event):
         index, path, dur = self.prepare_track()
-        if self.played and not self.paused:
+        if self.played:
             pygame.mixer.music.load(path)
             pygame.mixer.music.play()
             self.played = False
             p1 = threading.Thread(target=self.song_time, args=[dur])
             self.change_title()
             p1.start()
-        else:
+        elif self.paused:
             pygame.mixer.music.unpause()
+            self.cls = False
             self.paused = False
             self.played = True
             p1 = threading.Thread(target=self.song_time, args=[dur])
@@ -162,6 +164,7 @@ class Frame(wx.Frame):
 
     # Definition of function to change track to next on playlist
     def forward(self, event):
+        self.progress_value = 0
         index, path, dur = self.prepare_track()
         self.playList.SetSelection(index + 1)
         track = self.playList.GetSelection()
@@ -173,6 +176,7 @@ class Frame(wx.Frame):
 
     # Definition of function to change track to previous
     def rewind(self, event):
+        self.progress_value = 0
         index, path, dur = self.prepare_track()
         self.playList.SetSelection(index - 1)
         track = self.playList.GetSelection()
@@ -187,6 +191,7 @@ class Frame(wx.Frame):
     def pause(self, event):
 
         if self.paused:
+            self.cls = False
             index, path, dur = self.prepare_track()
             pygame.mixer.music.unpause()
             self.paused = False
@@ -203,19 +208,19 @@ class Frame(wx.Frame):
     # Definition of function to show duration of playing song. Need to be fixed.
     def song_time(self, dur):
         self.timer.SetRange(dur)
-        progress_value = 0
+
         while True:
             if self.sec == 60:
                 self.minutes += 1
                 self.sec = 0
             if self.sec < 10:
                 self.duration.SetLabel(f'{self.minutes}:0{self.sec}')
-                self.timer.SetValue(progress_value)
+                self.timer.SetValue(self.progress_value)
             else:
                 self.duration.SetLabel(f'{self.minutes}:{self.sec}')
-                self.timer.SetValue(progress_value)
+                self.timer.SetValue(self.progress_value)
             self.sec += 1
-            progress_value += 1
+            self.progress_value += 1
             time.sleep(1)
             if self.cls:
                 break
